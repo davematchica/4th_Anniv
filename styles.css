@@ -74,6 +74,44 @@ canvas {
     font-size: clamp(2.5rem, 6vw, 5rem);
 }
 
+.bottom-message {
+    position: fixed;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 80px);
+    left: 50%;
+    transform: translateX(-50%);
+
+    width: 100%;
+    max-width: 600px;
+    padding: 0 16px;
+
+    text-align: center;
+    font-size: clamp(14px, 4vw, 18px);
+    line-height: 1.6;
+
+    color: #fff;
+    text-shadow:
+        0 0 5px rgba(255, 100, 150, 0.9),
+        0 0 25px rgba(255, 100, 150, 0.7);
+
+    z-index: 3;
+    pointer-events: none;
+}
+
+.bottom-message {
+    animation: fadeUp 2s ease forwards;
+}
+
+@keyframes fadeUp {
+    from {
+        opacity: 0;
+        transform: translate(-50%, 10px);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, 0);
+    }
+}
+
 /* Fade animation */
 @keyframes fadeIn {
     from {

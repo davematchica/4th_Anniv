@@ -14,6 +14,15 @@
         const DPR = window.devicePixelRatio || 1;
         const scale = isMobile ? 0.5 : 1;
 
+        window.addEventListener('click', e => {
+            spawnClickHearts(e.clientX, e.clientY);
+        });
+
+        window.addEventListener('touchstart', e => {
+            const t = e.touches[0];
+            spawnClickHearts(t.clientX, t.clientY);
+        }, { passive: true });
+
         let width, height;
 
         function resize() {
@@ -81,6 +90,31 @@
             };
         });
 
+        const clickHearts = [];
+
+        function spawnClickHearts(x, y) {
+            const count = isMobile ? 8 : 14;
+
+            for (let i = 0; i < count; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const speed = 0.6 + Math.random() * 1.2;
+
+                clickHearts.push({
+                    x,
+                    y,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed - 0.8, // upward bias
+                    size: 6 + Math.random() * 6,
+                    life: 1,
+                    decay: 1 / 300, // ~5 seconds @ 60fps
+                    hue: 330 + Math.random() * 20,
+                    rotation: Math.random() * Math.PI,
+                    vr: (Math.random() - 0.5) * 0.01,
+                    floatPhase: Math.random() * Math.PI * 2
+                });
+            }
+        }
+
         const config = {
             traceK: 0.4,
             timeDelta: 0.01
@@ -95,6 +129,7 @@
             time += ((Math.sin(time) < 0) ? 9 : (n > 0.8 ? 0.2 : 1)) * config.timeDelta;
 
             ctx.clearRect(0, 0, width, height);
+            ctx.globalCompositeOperation = 'lighter';
 
             for (const p of particles) {
                 const target = targets[p.q];
@@ -132,6 +167,43 @@
             }
 
             requestAnimationFrame(animate);
+
+            for (let i = clickHearts.length - 1; i >= 0; i--) {
+                const h = clickHearts[i];
+
+                // Gentle floating physics
+                h.floatPhase += 0.02;
+                h.vx *= 0.995;
+                h.vy *= 0.995;
+
+                h.x += h.vx + Math.sin(h.floatPhase) * 0.15;
+                h.y += h.vy - 0.15; // slow upward float
+                h.rotation += h.vr;
+                h.life -= h.decay;
+
+                ctx.save();
+                ctx.translate(h.x, h.y);
+                ctx.rotate(h.rotation);
+                ctx.globalAlpha = Math.max(h.life, 0);
+                ctx.fillStyle = `hsla(${h.hue}, 85%, 65%, ${h.life})`;
+
+                ctx.beginPath();
+                ctx.moveTo(0, -h.size / 2);
+                ctx.bezierCurveTo(
+                    -h.size, -h.size,
+                    -h.size * 1.5, h.size / 2,
+                    0, h.size
+                );
+                ctx.bezierCurveTo(
+                    h.size * 1.5, h.size / 2,
+                    h.size, -h.size,
+                    0, -h.size / 2
+                );
+                ctx.fill();
+                ctx.restore();
+
+                if (h.life <= 0) clickHearts.splice(i, 1);
+            }
         }
 
         animate();
